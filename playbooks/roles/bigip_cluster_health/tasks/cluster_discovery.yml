@@ -1,0 +1,48 @@
+- name: Retrieve CM Device
+  ansible.builtin.uri:
+    url: "https://{{ ansible_host }}:{{ ansible_host_port }}/mgmt/tm/cm/device"
+    method: GET
+    validate_certs: "{{ verify_host_certificate | bool }}"
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+    return_content: true
+    user: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    http_agent: "f5-tmos-ha-healthcheck"
+  register: cm_device
+  delegate_to: localhost
+
+- name: Get Local Device Name from cm_device
+  ansible.builtin.set_fact:
+    cm_device_local: "{{ item }}"
+  loop: "{{ cm_device.json['items'] }}"
+  when: item.selfDevice == 'true'
+
+- name: Set Facts about Local Device
+  ansible.builtin.set_fact:
+    cm_device_local_configsync_ip: "{{ cm_device_local.configsyncIp }}"
+    cm_device_local_hostname: "{{ cm_device_local.hostname }}"
+    cm_device_local_management_ip: "{{ cm_device_local.managementIp }}"
+    cm_device_local_platform_id: "{{ cm_device_local.platformId }}"
+    cm_device_local_version: "{{ cm_device_local.version }}"
+    cm_device_local_failover_state: "{{ cm_device_local.failoverState }}"
+    cm_device_local_mgmt_unicast_mode: "{{ cm_device_local.mgmtUnicastMode }}"
+    cm_device_local_name: "{{ cm_device_local.name }}"
+
+- name: Get Peer Devices from cm_device
+  ansible.builtin.set_fact:
+    cm_device_peers: "{{ peer | default([]) + [item] }}"
+  loop: "{{ cm_device.json['items'] }}"
+  when: item.selfDevice != 'true'
+
+- name: Verify cluster configuration is consistent
+  ansible.builtin.assert:
+    that:
+      - cm_device_local_platform_id == item.platformId
+      - cm_device_local_version == item.version
+      - cm_device_local_mgmt_unicast_mode == item.mgmtUnicastMode
+      - item.failoverState != cm_device_local_failover_state
+      - "'active' in [item.failoverState, cm_device_local_failover_state] | map('lower') | list"
+    fail_msg: "Cluster configuration mismatch or multiple active nodes detected"
+  loop: "{{ cm_device_peers }}"

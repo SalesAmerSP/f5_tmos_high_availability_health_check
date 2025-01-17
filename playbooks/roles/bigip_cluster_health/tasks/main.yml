@@ -1,0 +1,8 @@
+- name: Include poll tasks
+  ansible.builtin.include_tasks: poll.yml
+
+- name: Include cluster discovery tasks
+  ansible.builtin.include_tasks: cluster_discovery.yml
+
+- name: Include health check tasks
+  ansible.builtin.include_tasks: health_check.yml

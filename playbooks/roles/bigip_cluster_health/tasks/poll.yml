@@ -1,0 +1,20 @@
+- name: Perform DNS lookup for each BIG-IP
+  ansible.builtin.set_fact:
+    resolved_ip: "{{ lookup('community.dns.lookup', ansible_host, wantlist=True) }}"
+  when: not (ansible_host | ansible.utils.ipaddr)
+  failed_when: not (resolved_ip | ansible.utils.ipaddr)
+
+- name: Check BIG-IP readiness
+  ansible.builtin.uri:
+    url: "https://{{ ansible_host }}:{{ ansible_host_port }}/mgmt/tm/sys/ready"
+    method: GET
+    validate_certs: "{{ verify_host_certificate | bool }}"
+    headers:
+      Content-Type: "application/json"
+    return_content: true
+    status_code: 200
+    timeout: 5
+    url_username: "{{ ansible_user }}"
+    url_password: "{{ ansible_password }}"
+    http_agent: "f5-tmos-ha-healthcheck"
+  delegate_to: localhost
