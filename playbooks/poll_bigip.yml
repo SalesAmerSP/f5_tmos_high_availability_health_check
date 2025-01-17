@@ -1,0 +1,13 @@
+- name: Main Playbook for Polling BIG-IP Devices and Checking Cluster Health
+  hosts: all
+  gather_facts: false
+  roles:
+    - role: bigip_cluster_health
+
+# - name: Display Facts for BIG-IP devices
+#   hosts: all
+#   gather_facts: false
+#   tasks:
+#     - name: Display Facts
+#       ansible.builtin.debug:
+#         var: hostvars

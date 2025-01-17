@@ -1,0 +1,176 @@
+- name: System Performance Health Check
+  ansible.builtin.uri:
+    url: "https://{{ ansible_host }}:{{ ansible_host_port }}/mgmt/tm/sys/performance/all-stats"
+    method: GET
+    validate_certs: "{{ verify_host_certificate | bool }}"
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+    return_content: true
+    user: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    http_agent: "f5-tmos-ha-healthcheck"
+  register: sys_performance_allstats
+  delegate_to: localhost
+  ignore_errors: true
+
+- name: Set System Performance Facts
+  ansible.builtin.set_fact:
+    cpu_utilization_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Utilization']
+      .nestedStats.entries.Current.description }}"
+    tmm_memory_used_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/TMM%20Memory%20Used']
+      .nestedStats.entries.Current.description }}"
+    swap_used_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Swap%20Used']
+      .nestedStats.entries.Current.description }}"
+    byte_rate_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Byte%20Rate']
+      .nestedStats.entries.Current.description }}"
+    client_connections_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Client%20Connections']
+      .nestedStats.entries.Current.description }}"
+    connections_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Connections']
+      .nestedStats.entries.Current.description }}"
+    eviction_rate_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Eviction%20Rate']
+      .nestedStats.entries.Current.description }}"
+    http_requests_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/HTTP%20Requests']
+      .nestedStats.entries.Current.description }}"
+    server_connections_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Server%20Connections']
+      .nestedStats.entries.Current.description }}"
+    hit_rate_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Hit%20Rate']
+      .nestedStats.entries.Current.description }}"
+    packets_in_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/In']
+      .nestedStats.entries.Current.description }}"
+    other_memory_used_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Other%20Memory%20Used']
+      .nestedStats.entries.Current.description }}"
+    packets_out_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Out']
+      .nestedStats.entries.Current.description }}"
+    ssl_tps_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/SSL%20TPS']
+      .nestedStats.entries.Current.description }}"
+    service_packets_current: >-
+      "{{ sys_performance_allstats.json.entries
+      ['https://localhost/mgmt/tm/sys/performance/all-stats/Service']
+      .nestedStats.entries.Current.description }}"
+
+- name: System Clock Health Check
+  ansible.builtin.uri:
+    url: "https://{{ ansible_host }}:{{ ansible_host_port }}/mgmt/tm/sys/clock"
+    method: GET
+    validate_certs: "{{ verify_host_certificate | bool }}"
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+    timeout: 5
+    return_content: true
+    user: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    http_agent: "f5-tmos-ha-healthcheck"
+  register: sys_clock
+  delegate_to: localhost
+
+- name: NTP Configuration
+  ansible.builtin.uri :
+    url: "https://{{ ansible_host }}:{{ ansible_host_port }}/mgmt/tm/sys/ntp"
+    method: GET
+    validate_certs: "{{ verify_host_certificate | bool }}"
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+    timeout: 5
+    return_content: true
+    user: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    http_agent: "f5-tmos-ha-healthcheck"
+  register: sys_ntp
+  delegate_to: localhost
+
+- name: Set NTP Facts
+  ansible.builtin.set_fact:
+    ntp_servers: "{{ sys_ntp.json.servers }}"
+    ntp_timezone: "{{ sys_ntp.json.timezone }}"
+
+- name: TMOS Version Health Check
+  ansible.builtin.uri :
+    url: "https://{{ ansible_host }}:{{ ansible_host_port }}/mgmt/tm/sys/version"
+    method: GET
+    validate_certs: "{{ verify_host_certificate | bool }}"
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+    timeout: 5
+    return_content: true
+    user: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    http_agent: "f5-tmos-ha-healthcheck"
+  register: sys_version
+  delegate_to: localhost
+
+- name: Set Software Facts
+  ansible.builtin.set_fact:
+    tmos_build: "{{ sys_version.json.entries['https://localhost/mgmt/tm/sys/version/0'].nestedStats.entries.Build.description }}"
+    tmos_date: "{{ sys_version.json.entries['https://localhost/mgmt/tm/sys/version/0'].nestedStats.entries.Date.description }}"
+    tmos_version: "{{ sys_version.json.entries['https://localhost/mgmt/tm/sys/version/0'].nestedStats.entries.Version.description }}"
+    tmos_edition: "{{ sys_version.json.entries['https://localhost/mgmt/tm/sys/version/0'].nestedStats.entries.Edition.description }}"
+    tmos_product: "{{ sys_version.json.entries['https://localhost/mgmt/tm/sys/version/0'].nestedStats.entries.Product.description }}"
+    tmos_title: "{{ sys_version.json.entries['https://localhost/mgmt/tm/sys/version/0'].nestedStats.entries.Title.description }}"
+
+- name: Gather Failover State Time
+  ansible.builtin.uri :
+    url: "https://{{ ansible_host }}:{{ ansible_host_port }}/mgmt/tm/sys/failover"
+    method: GET
+    validate_certs: "{{ verify_host_certificate | bool }}"
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+    timeout: 5
+    return_content: true
+    user: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    http_agent: "f5-tmos-ha-healthcheck"
+  register: sys_failover
+  delegate_to: localhost
+
+- name: Set Failover Facts
+  ansible.builtin.set_fact:
+    failover_time: "{{ sys_failover.json.apiRawValues.apiAnonymous }}"
+
+- name: Gather HA Mirror Stats 
+  ansible.builtin.uri :
+    url: "https://{{ ansible_host }}:{{ ansible_host_port }}/mgmt/tm/sys/ha-mirror"
+    method: GET
+    validate_certs: "{{ verify_host_certificate | bool }}"
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+    timeout: 5
+    return_content: true
+    user: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    http_agent: "f5-tmos-ha-healthcheck"
+  register: sys_ha_mirror
+  delegate_to: localhost

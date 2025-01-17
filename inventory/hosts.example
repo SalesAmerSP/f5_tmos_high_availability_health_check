@@ -1,0 +1,40 @@
+all:
+  children:
+    tmos:
+      hosts:
+        bigip1a:
+          ansible_host: bigip1a.local
+          ansible_host_port: 443
+          ansible_user: admin
+          ansible_password: myp4ssw0rd!
+          verify_host_certificate: false
+        bigip1b:
+          ansible_host: bigip1b.local
+          ansible_host_port: 443
+          ansible_user: admin
+          ansible_password: myp4ssw0rd!
+          verify_host_certificate: false
+        bigip2a:
+          ansible_host: bigip2a.local
+          ansible_host_port: 443
+          ansible_user: admin
+          ansible_password: myp4ssw0rd!
+          verify_host_certificate: false
+        bigip2b:
+          ansible_host: bigip2b.local
+          ansible_host_port: 443
+          ansible_user: admin
+          ansible_password: myp4ssw0rd!
+          verify_host_certificate: false
+        badhost1a:
+          ansible_host: host1a.nevergoingtowork.example.com
+          ansible_host_port: 443
+          ansible_user: admin
+          ansible_password: beachball123!
+          verify_host_certificate: false
+        badhost2a:
+          ansible_host: host2a.nevergoingtowork.example.com
+          ansible_host_port: 443
+          ansible_user: admin
+          ansible_password: beachball123!
+          verify_host_certificate: false
